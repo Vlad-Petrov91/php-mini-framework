@@ -1,0 +1,55 @@
+networks:
+  network:
+    name: network
+
+services:
+  nginx:
+    container_name: nginx
+    image: nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./:/var/www
+      - ./_docker/nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - network
+    depends_on:
+      - php
+      - mysql
+  php:
+    container_name: php
+    build:
+      context: .
+      dockerfile: _docker/app/Dockerfile
+    volumes:
+      - ./:/var/www
+    networks:
+      - network
+    depends_on:
+      - mysql
+  mysql:
+    container_name: mysql
+    image: mysql
+    volumes:
+      - ./tmp/db:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: 'database'
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - 3306:3306
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    user: mysql
+    networks:
+      - network
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin
+    ports:
+      - 1500:80
+    environment:
+      - PMA_HOST=mysql
+    networks:
+      - network
+    depends_on:
+      - mysql
