@@ -4,15 +4,26 @@ declare(strict_types=1);
 
 use App\Controllers\HomeController;
 use App\Controllers\ProductController;
+use DI\Container;
+use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\ServerRequest;
 use HttpSoft\Emitter\SapiEmitter;
 use League\Route\Router;
+use League\Route\Strategy\ApplicationStrategy;
+use Psr\Http\Message\ResponseFactoryInterface;
 
 require dirname(__DIR__) . "/vendor/autoload.php";
 
 $request = ServerRequest::fromGlobals();
 
+$container = new Container([
+    ResponseFactoryInterface::class => DI\create(HttpFactory::class),
+]);
+$factory = new HttpFactory();
 $router = new Router();
+$strategy = new ApplicationStrategy();
+$strategy->setContainer($container);
+$router->setStrategy($strategy);
 
 $router->get('/', [HomeController::class, 'index']);
 $router->get('/products', [ProductController::class, 'index']);
