@@ -19,11 +19,16 @@ require dirname(__DIR__) . "/vendor/autoload.php";
 
 $request = ServerRequest::fromGlobals();
 
-$container = new Container([
+$builder = new DI\ContainerBuilder(); // Создаём контейнер для возможности внедрения зависимостей через свойства класса и настраиваем его 
+$builder->addDefinitions([
     ResponseFactoryInterface::class => DI\create(HttpFactory::class),
     RendererInterface::class => DI\create(TwigRenderer::class),
     StreamFactoryInterface::class => DI\create(HttpFactory::class),
 ]);
+$builder->useAttributes(true); // Включаем поддержку атрибутов для внедрения зависимостей через свойства класса
+$container = $builder->build(); // Получаем объект контейнера
+
+
 $factory = new HttpFactory();
 $router = new Router();
 $strategy = new ApplicationStrategy();
