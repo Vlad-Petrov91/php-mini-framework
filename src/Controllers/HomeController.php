@@ -4,19 +4,26 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use Framework\Template\RendererInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 
 class HomeController
 {
 
-    public function __construct(private ResponseFactoryInterface $factory) {}
-
+    public function __construct(
+        private ResponseFactoryInterface $responseFactory,
+        private RendererInterface $renderer,
+        private StreamFactoryInterface $streamFactory,
+    ) {}
     public function index(): ResponseInterface
     {
-        $stream = $this->factory->createStream('Homepage');
-        $responce = $this->factory->createResponse(200);
-        $responce = $responce->withBody($stream);
-        return $responce;
+        $content = $this->renderer->render('home/index');
+        // $stream = $this->factory->createStream($content);
+        $stream = $this->streamFactory->createStream($content ?? '');
+        $response = $this->responseFactory->createResponse(200);
+        $response = $response->withBody($stream);
+        return $response;
     }
 }

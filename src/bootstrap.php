@@ -5,12 +5,15 @@ declare(strict_types=1);
 use App\Controllers\HomeController;
 use App\Controllers\ProductController;
 use DI\Container;
+use Framework\Template\TwigRenderer;
+use Framework\Template\RendererInterface;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\ServerRequest;
 use HttpSoft\Emitter\SapiEmitter;
 use League\Route\Router;
 use League\Route\Strategy\ApplicationStrategy;
 use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 
 require dirname(__DIR__) . "/vendor/autoload.php";
 
@@ -18,6 +21,8 @@ $request = ServerRequest::fromGlobals();
 
 $container = new Container([
     ResponseFactoryInterface::class => DI\create(HttpFactory::class),
+    RendererInterface::class => DI\create(TwigRenderer::class),
+    StreamFactoryInterface::class => DI\create(HttpFactory::class),
 ]);
 $factory = new HttpFactory();
 $router = new Router();
