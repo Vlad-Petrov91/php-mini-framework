@@ -1,5 +1,8 @@
 {% extends 'layout.twig' %}
 {% block title %}{{ parent() }} > Products{% endblock %}
 {% block content %}
-    <h2>Product Id: {{ id }}</h2>
+    <h2>Product Id: {{ product.id }}</h2>
+    <p>Name: {{ product.name }}</p>
+    <p>Description: {{ product.description }}</p>
+    <p>Price: {{ product.price }}</p>
 {% endblock %}

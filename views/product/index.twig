@@ -2,7 +2,26 @@
 {% block title %}{{ parent() }} > Products{% endblock %}
 {% block content %}
    <h2>Product Index</h2>
-{% endblock %}
+   <a href="/product/create">Create New Product</a>
+   <table>
+       <thead>
+           <tr>
+               <th>Name</th>
+               <th>Description</th>
+               <th>Price</th>
+           </tr>
+       </thead>
+       <tbody>
+           {% for product in products %}
+           <tr>
+               <td><a href="/product/{{ product.id }}">{{ product.name }}</a></td>
+               <td>{{ product.description }}</td>
+               <td>{{ product.price }}</td>
+           </tr>
+           {% endfor %}
+       </tbody>
+   </table>
+{% endblock %}  
 
 
 

@@ -29,4 +29,10 @@ abstract class AbstractController
         $responce = $responce->withBody($stream);
         return $responce;
     }
+
+    protected function redirect(string $path): ResponseInterface
+    {
+        $responce = $this->responseFactory->createResponse(302);
+        return $responce->withHeader('Location', $path);
+    }
 }
