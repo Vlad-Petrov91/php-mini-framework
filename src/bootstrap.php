@@ -2,46 +2,24 @@
 
 declare(strict_types=1);
 
-use App\Controllers\HomeController;
-use App\Controllers\ProductController;
-use Doctrine\DBAL\DriverManager;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\ORMSetup;
-use Framework\Template\TwigRenderer;
-use Framework\Template\RendererInterface;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\ServerRequest;
 use HttpSoft\Emitter\SapiEmitter;
 use League\Route\Router;
 use League\Route\Strategy\ApplicationStrategy;
-use Psr\Http\Message\ResponseFactoryInterface;
-use Psr\Http\Message\StreamFactoryInterface;
 
-require dirname(__DIR__) . "/vendor/autoload.php";
+define('APP_DIR', dirname(__DIR__)); // определяем константу APP_DIR, которая содержит путь к корневой директории приложения.
+
+require APP_DIR . "/vendor/autoload.php";
+
+$dotenv = Dotenv\Dotenv::createImmutable(APP_DIR); // Создаем объект Dotenv для загрузки переменных окружения из файла .env. 
+$dotenv->load();
+
 
 $request = ServerRequest::fromGlobals();
 
 $builder = new DI\ContainerBuilder(); // Создаём контейнер для возможности внедрения зависимостей через свойства класса и настраиваем его 
-$builder->addDefinitions([ // добавляем определения для интерфейсов, которые будут внедряться в контроллеры и другие классы
-    ResponseFactoryInterface::class => DI\create(HttpFactory::class),
-    RendererInterface::class => DI\create(TwigRenderer::class),
-    StreamFactoryInterface::class => DI\create(HttpFactory::class),
-    EntityManagerInterface::class => function () {
-        $paths = [dirname(__DIR__) . '/src/Models']; // пути к директориям, где находятся сущности
-        $config = ORMSetup::createAttributeMetadataConfiguration($paths, true); // создаем объект конфигурации Doctrine
-        $config->enableNativeLazyObjects(true); // включаем поддержку ленивых загрузок для оптимизации производительности
-        $params = [
-            'driver' => 'pdo_mysql',
-            'host' => 'mysql',
-            'dbname' => 'shop',
-            'user' => 'root',
-            'password' => 'root',
-        ];
-        $connection = DriverManager::getConnection($params, $config); // создаем соединение с базой данных
-        return new EntityManager($connection, $config); // создаем и возвращаем EntityManager (это центральный сервис для управления всеми сущностями и их состояниями)
-    },
-]);
+$builder->addDefinitions(include APP_DIR . '/config/definitions.php'); // Подключаем файл с определениями зависимостей
 $builder->useAttributes(true); // Включаем поддержку атрибутов для внедрения зависимостей через свойства класса
 $container = $builder->build(); // Получаем объект контейнера
 
@@ -52,10 +30,8 @@ $strategy = new ApplicationStrategy(); // Создаем стратегию об
 $strategy->setContainer($container); // Устанавливаем контейнер в стратегию обработки маршрутов, чтобы роутер мог использовать его для разрешения зависимостей при обработке маршрутов. Это позволяет нам легко внедрять зависимости в контроллеры и другие классы, которые обрабатывают маршруты, без необходимости вручную создавать экземпляры этих классов и их зависимостей. Роутер будет автоматически использовать контейнер для создания экземпляров классов и разрешения их зависимостей при обработке входящих HTTP-запросов.
 $router->setStrategy($strategy); // Устанавливаем стратегию обработки маршрутов в роутер, чтобы роутер знал, какую стратегию использовать при обработке маршрутов. В данном случае мы используем ApplicationStrategy, которая позволяет использовать контейнер для внедрения зависимостей в контроллеры и другие классы, которые обрабатывают маршруты. Это означает, что при обработке маршрута роутер будет автоматически разрешать зависимости и создавать экземпляры классов, которые нужны для обработки запроса.
 
-$router->get('/', [HomeController::class, 'index']);
-$router->get('/products', [ProductController::class, 'index']);
-$router->get('/product/{id:number}', [ProductController::class, 'show']);
-$router->map(['GET', 'POST'], '/product/create', [ProductController::class, 'create']);
+$route = include APP_DIR . '/config/routes.php'; // Подключаем файл с определением маршрутов, который возвращает функцию для настройки роутера. В этом файле мы определяем маршруты и связываем их с соответствующими контроллерами и методами, которые будут обрабатывать эти маршруты. Роутер будет использовать эти определения для сопоставления входящих HTTP-запросов с соответствующими контроллерами и методами, которые будут обрабатывать эти запросы.
+$route($router); // Вызываем функцию, которая была возвращена из файла с определением маршрутов, передавая ей объект роутера для настройки маршрутов. 
 
 $responce = $router->dispatch($request); // Диспетчер маршрутов принимает входящий HTTP-запрос и пытается найти соответствующий маршрут, который соответствует методу и пути запроса. Если маршрут найден, он вызывает связанный с ним контроллер и метод, передавая ему необходимые параметры (например, идентификатор продукта). Контроллер обрабатывает запрос, выполняет бизнес-логику и возвращает HTTP-ответ, который затем отправляется обратно клиенту. Если маршрут не найден, диспетчер может вернуть ответ с ошибкой 404 или другой соответствующий ответ.
 $emitter = new SapiEmitter(); // Создаем эмиттер для отправки HTTP-ответа клиенту. Эмиттер отвечает за правильную отправку заголовков и тела ответа в соответствии с PSR-7 стандартами.
